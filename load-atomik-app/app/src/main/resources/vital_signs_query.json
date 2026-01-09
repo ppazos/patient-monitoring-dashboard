@@ -1,0 +1,91 @@
+{"uid":"e1384762-b198-40fb-929b-c9de28cc3ac3",
+    "name": "Vital Signs Monitoring",
+    "description": "For dashboard",
+    "resultType": "composition",
+    "isCount": false,
+    "anyVersion": null,
+    "where": {
+        "_type": "Criteria",
+        "templateId": "Vital signs monitoring",
+        "archetypeId": "openEHR-EHR-COMPOSITION.vital_signs_monitoring.v1",
+        "path": "/uid/value",
+        "rmTypeName": "String",
+        "name": "uid",
+        "isExists": true,
+        "allowAnyArchetypeVersion": false
+    },
+    "select": [
+        {
+            "templateId": "Vital signs monitoring",
+            "archetypeId": "openEHR-EHR-OBSERVATION.blood_pressure.v2",
+            "path": "/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value",
+            "rmTypeName": "DV_QUANTITY",
+            "name": "Systolic.value",
+            "allowAnyArchetypeVersion": false
+        },
+        {
+            "templateId": "Vital signs monitoring",
+            "archetypeId": "openEHR-EHR-OBSERVATION.blood_pressure.v2",
+            "path": "/data[at0001]/events[at0006]/data[at0003]/items[at0005]/value",
+            "rmTypeName": "DV_QUANTITY",
+            "name": "Diastolic.value",
+            "allowAnyArchetypeVersion": false
+        },
+        {
+            "templateId": "Vital signs monitoring",
+            "archetypeId": "openEHR-EHR-OBSERVATION.body_temperature.v2",
+            "path": "/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value",
+            "rmTypeName": "DV_QUANTITY",
+            "name": "Temperature.value",
+            "allowAnyArchetypeVersion": false
+        },
+        {
+            "templateId": "Vital signs monitoring",
+            "archetypeId": "openEHR-EHR-OBSERVATION.pulse.v2",
+            "path": "/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value",
+            "rmTypeName": "DV_QUANTITY",
+            "name": "Rate.value",
+            "allowAnyArchetypeVersion": false
+        },
+        {
+            "templateId": "Vital signs monitoring",
+            "archetypeId": "openEHR-EHR-OBSERVATION.pulse_oximetry.v1",
+            "path": "/data[at0001]/events[at0002]/data[at0003]/items[at0006]/value",
+            "rmTypeName": "DV_PROPORTION",
+            "name": "SpO\u2082.value",
+            "allowAnyArchetypeVersion": false
+        },
+        {
+            "templateId": "Vital signs monitoring",
+            "archetypeId": "openEHR-EHR-OBSERVATION.pulse_oximetry.v1",
+            "path": "/data[at0001]/events[at0002]/data[at0003]/items[at0044]/value",
+            "rmTypeName": "DV_QUANTITY",
+            "name": "SpOC.value",
+            "allowAnyArchetypeVersion": false
+        },
+        {
+            "templateId": "Vital signs monitoring",
+            "archetypeId": "openEHR-EHR-OBSERVATION.pulse_oximetry.v1",
+            "path": "/data[at0001]/events[at0002]/data[at0003]/items[at0045]/value",
+            "rmTypeName": "DV_PROPORTION",
+            "name": "SpCO.value",
+            "allowAnyArchetypeVersion": false
+        },
+        {
+            "templateId": "Vital signs monitoring",
+            "archetypeId": "openEHR-EHR-OBSERVATION.pulse_oximetry.v1",
+            "path": "/data[at0001]/events[at0002]/data[at0003]/items[at0046]/value",
+            "rmTypeName": "DV_PROPORTION",
+            "name": "SpMet.value",
+            "allowAnyArchetypeVersion": false
+        },
+        {
+            "templateId": "Vital signs monitoring",
+            "archetypeId": "openEHR-EHR-OBSERVATION.respiration.v2",
+            "path": "/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value",
+            "rmTypeName": "DV_QUANTITY",
+            "name": "Rate.value",
+            "allowAnyArchetypeVersion": false
+        }
+    ]
+}

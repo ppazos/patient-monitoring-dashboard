@@ -1,0 +1,348 @@
+// Parameter definitions
+const parameters = {
+    SYS: { 
+        name: 'Systolic BP (mmHg)', 
+        min: 90, 
+        max: 120, 
+        chartMin: 60, 
+        chartMax: 180,
+        step: 5
+    },
+    DIA: { 
+        name: 'Diastolic BP (mmHg)', 
+        min: 60, 
+        max: 80, 
+        chartMin: 40, 
+        chartMax: 120,
+        step: 2
+    },
+    PRA: { 
+        name: 'Pulse Rate (bpm)', 
+        min: 60, 
+        max: 100, 
+        chartMin: 30, 
+        chartMax: 150,
+        step: 5
+    },
+    ABR: { 
+        name: 'Breathing Rate (breaths/min)', 
+        min: 12, 
+        max: 20, 
+        chartMin: 5, 
+        chartMax: 35,
+        step: 1
+    },
+    PRV: { 
+        name: 'Pulse Rate Variability (%)', 
+        min: 20, 
+        max: 50, 
+        chartMin: 0, 
+        chartMax: 80,
+        step: 2
+    },
+    SpO2: { 
+        name: 'Blood Oxygen Saturation (%)', 
+        min: 95, 
+        max: 100, 
+        chartMin: 80, 
+        chartMax: 100,
+        step: 1
+    }
+};
+
+let selectedParameter = 'SYS';
+
+// Calculate anomaly score for a single value
+function calculateParameterAnomaly(value, range) {
+    const { min, max } = range;
+    
+    if (value >= min && value <= max) {
+        return 0;
+    }
+    
+    let deviation;
+    if (value < min) {
+        if (value == 50) console.log(value, min, (min - value), (min - value) / min);
+        
+        deviation = ((min - value) / min) * 100;
+    } else {
+        deviation = ((value - max) / max) * 100;
+    }
+
+    console.log(value, min, max, deviation, Math.min(deviation, 100));
+    
+    
+    return Math.min(deviation, 100);
+}
+
+// Generate chart data for selected parameter
+function generateChartData(paramKey) {
+    const param = parameters[paramKey];
+    const data = [];
+    
+    for (let value = param.chartMin; value <= param.chartMax; value += param.step) {
+        const anomalyScore = calculateParameterAnomaly(value, param);
+        const status = value >= param.min && value <= param.max ? 'Normal' : 'Anomaly';
+        
+        data.push({
+            value: value,
+            anomalyPercentage: Math.round(anomalyScore * 10) / 10,
+            status: status,
+            inRange: status === 'Normal'
+        });
+    }
+    
+    return data;
+}
+
+// Initialize parameter buttons
+function initializeParameterGrid() {
+    const grid = document.getElementById('parameterGrid');
+    grid.innerHTML = '';
+    
+    Object.entries(parameters).forEach(([key, param]) => {
+        const button = document.createElement('button');
+        button.className = `parameter-btn ${key === selectedParameter ? 'active' : ''}`;
+        button.onclick = () => selectParameter(key);
+        
+        button.innerHTML = `
+            <div class="parameter-name">${key}</div>
+            <div class="parameter-desc">${param.name}</div>
+        `;
+        
+        grid.appendChild(button);
+    });
+}
+
+// Update parameter info
+function updateParameterInfo() {
+    const param = parameters[selectedParameter];
+    const title = document.getElementById('parameterTitle');
+    const infoGrid = document.getElementById('infoGrid');
+    
+    title.textContent = `${param.name} - Normal Range Analysis`;
+    
+    infoGrid.innerHTML = `
+        <div class="info-box normal">
+            <div class="info-label">Normal Range</div>
+            <div class="info-value">${param.min} - ${param.max}</div>
+        </div>
+        <div class="info-box chart">
+            <div class="info-label">Chart Range</div>
+            <div class="info-value">${param.chartMin} - ${param.chartMax}</div>
+        </div>
+        <div class="info-box step">
+            <div class="info-label">Step Size</div>
+            <div class="info-value">${param.step}</div>
+        </div>
+    `;
+}
+
+// Draw chart
+function drawChart() {
+    const svg = document.getElementById('chartSvg');
+    const data = generateChartData(selectedParameter);
+    const param = parameters[selectedParameter];
+    
+    // Clear previous content
+    svg.innerHTML = '';
+    
+    // Chart dimensions
+    const margin = { top: 40, right: 40, bottom: 60, left: 80 };
+    const width = 800 - margin.left - margin.right;
+    const height = 400 - margin.top - margin.bottom;
+    
+    // Scales
+    const xMin = param.chartMin;
+    const xMax = param.chartMax;
+    const yMin = 0;
+    const yMax = 100;
+    
+    const xScale = (value) => margin.left + ((value - xMin) / (xMax - xMin)) * width;
+    const yScale = (value) => margin.top + height - ((value - yMin) / (yMax - yMin)) * height;
+    
+    // Create main group
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    
+    // Grid lines
+    for (let i = 0; i <= 10; i++) {
+        const y = margin.top + (i * height / 10);
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', margin.left);
+        line.setAttribute('x2', margin.left + width);
+        line.setAttribute('y1', y);
+        line.setAttribute('y2', y);
+        line.setAttribute('class', 'grid-line');
+        g.appendChild(line);
+        
+        // Y-axis labels
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', margin.left - 10);
+        text.setAttribute('y', y + 4);
+        text.setAttribute('text-anchor', 'end');
+        text.setAttribute('class', 'axis-label');
+        text.textContent = (100 - i * 10);
+        g.appendChild(text);
+    }
+    
+    // X-axis grid lines and labels
+    const xStep = (xMax - xMin) / 10;
+    for (let i = 0; i <= 10; i++) {
+        const x = margin.left + (i * width / 10);
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x);
+        line.setAttribute('x2', x);
+        line.setAttribute('y1', margin.top);
+        line.setAttribute('y2', margin.top + height);
+        line.setAttribute('class', 'grid-line');
+        g.appendChild(line);
+        
+        // X-axis labels
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', x);
+        text.setAttribute('y', margin.top + height + 20);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('class', 'axis-label');
+        text.textContent = Math.round(xMin + i * xStep);
+        g.appendChild(text);
+    }
+    
+    // Axes
+    const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    xAxis.setAttribute('x1', margin.left);
+    xAxis.setAttribute('x2', margin.left + width);
+    xAxis.setAttribute('y1', margin.top + height);
+    xAxis.setAttribute('y2', margin.top + height);
+    xAxis.setAttribute('class', 'axis');
+    g.appendChild(xAxis);
+    
+    const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    yAxis.setAttribute('x1', margin.left);
+    yAxis.setAttribute('x2', margin.left);
+    yAxis.setAttribute('y1', margin.top);
+    yAxis.setAttribute('y2', margin.top + height);
+    yAxis.setAttribute('class', 'axis');
+    g.appendChild(yAxis);
+    
+    // Reference lines for normal range
+    const minLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    minLine.setAttribute('x1', xScale(param.min));
+    minLine.setAttribute('x2', xScale(param.min));
+    minLine.setAttribute('y1', margin.top);
+    minLine.setAttribute('y2', margin.top + height);
+    minLine.setAttribute('class', 'reference-line');
+    g.appendChild(minLine);
+    
+    const maxLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    maxLine.setAttribute('x1', xScale(param.max));
+    maxLine.setAttribute('x2', xScale(param.max));
+    maxLine.setAttribute('y1', margin.top);
+    maxLine.setAttribute('y2', margin.top + height);
+    maxLine.setAttribute('class', 'reference-line');
+    g.appendChild(maxLine);
+    
+    // Reference line labels
+    const minLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    minLabel.setAttribute('x', xScale(param.min) - 5);
+    minLabel.setAttribute('y', margin.top - 5);
+    minLabel.setAttribute('text-anchor', 'end');
+    minLabel.setAttribute('class', 'chart-label');
+    minLabel.textContent = 'Min Normal';
+    minLabel.setAttribute('fill', '#10b981');
+    g.appendChild(minLabel);
+    
+    const maxLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    maxLabel.setAttribute('x', xScale(param.max) + 5);
+    maxLabel.setAttribute('y', margin.top - 5);
+    maxLabel.setAttribute('text-anchor', 'start');
+    maxLabel.setAttribute('class', 'chart-label');
+    maxLabel.textContent = 'Max Normal';
+    maxLabel.setAttribute('fill', '#10b981');
+    g.appendChild(maxLabel);
+    
+    // Data line
+    const pathData = data.map((d, i) => 
+        `${i === 0 ? 'M' : 'L'} ${xScale(d.value)} ${yScale(d.anomalyPercentage)}`
+    ).join(' ');
+    
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', pathData);
+    path.setAttribute('class', 'data-line');
+    g.appendChild(path);
+    
+    // Data points
+    data.forEach((d) => {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', xScale(d.value));
+        circle.setAttribute('cy', yScale(d.anomalyPercentage));
+        circle.setAttribute('r', 4);
+        circle.setAttribute('class', 'data-point');
+        circle.onmouseover = (e) => showTooltip(e, d);
+        circle.onmouseout = hideTooltip;
+        g.appendChild(circle);
+    });
+    
+    // Axis labels
+    const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    xLabel.setAttribute('x', margin.left + width / 2);
+    xLabel.setAttribute('y', margin.top + height + 45);
+    xLabel.setAttribute('text-anchor', 'middle');
+    xLabel.setAttribute('class', 'chart-label');
+    xLabel.textContent = param.name;
+    g.appendChild(xLabel);
+    
+    const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    yLabel.setAttribute('x', 20);
+    yLabel.setAttribute('y', margin.top + height / 2);
+    yLabel.setAttribute('text-anchor', 'middle');
+    yLabel.setAttribute('class', 'chart-label');
+    yLabel.setAttribute('transform', `rotate(-90, 20, ${margin.top + height / 2})`);
+    yLabel.textContent = 'Anomaly Percentage (%)';
+    g.appendChild(yLabel);
+    
+    svg.appendChild(g);
+}
+
+// Tooltip functions
+function showTooltip(event, data) {
+    const tooltip = document.getElementById('tooltip');
+    const color = data.inRange ? '#10b981' : '#ef4444';
+    
+    tooltip.innerHTML = `
+        <div style="font-weight: 600;">Value: ${data.value}</div>
+        <div style="color: ${color};">Anomaly: ${data.anomalyPercentage}%</div>
+        <div style="font-size: 0.8rem; color: ${color};">${data.status}</div>
+    `;
+    
+    tooltip.style.display = 'block';
+    tooltip.style.left = event.pageX + 10 + 'px';
+    tooltip.style.top = event.pageY - 10 + 'px';
+}
+
+function hideTooltip() {
+    document.getElementById('tooltip').style.display = 'none';
+}
+
+// Select parameter
+function selectParameter(paramKey) {
+    selectedParameter = paramKey;
+    
+    // Update active button
+    document.querySelectorAll('.parameter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.closest('.parameter-btn').classList.add('active');
+    
+    updateParameterInfo();
+    drawChart();
+}
+
+// Initialize the application
+function init() {
+    initializeParameterGrid();
+    updateParameterInfo();
+    drawChart();
+}
+
+// Start the application
+init();
